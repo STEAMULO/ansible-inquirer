@@ -1,0 +1,24 @@
+{
+  "name": "ansible-inquirer",
+  "version": "1.0.0",
+  "description": "Inquirer wrapper for Ansible usage with recursive actions support",
+  "main": "ansible-inquirer.js",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/STEAMULO/ansible-inquirer.git"
+  },
+  "keywords": [
+    "ansible",
+    "inquirer"
+  ],
+  "author": "mdautry",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/STEAMULO/ansible-inquirer/issues"
+  },
+  "homepage": "https://github.com/STEAMULO/ansible-inquirer#readme",
+  "dependencies": {
+    "debug": "^2.3.2",
+    "inquirer": "^1.2.2"
+  }
+}
