@@ -148,7 +148,7 @@ exports.launchPlaybook = function(playbook, tagsVars, skips){
             'ansible-playbook '
             + playbook
             + (params.limit && params.limit !== 'all' ? ' -l ' + [params.limit].join(',') : '')
-            + (params.env ? ' -i ' + params.env : ' -i hosts')
+            + (params.hosts ? ' -i ' + params.hosts : ' -i hosts')
             + ' -u ' + params.user + ' '
             + (tagsVars || '')
             + (params.checkMode ? ' --check ' : '')
