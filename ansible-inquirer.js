@@ -8,12 +8,12 @@ var exports = module.exports = {
     limit_default: ['all'],
     users: ['steamulo'],
     user_default: 'steamulo',
-    hosts: ['hosts'],
-    host_default: 'hosts'
+    inventories: ['hosts'],
+    inventory_default: 'hosts'
 };
 
-var inquirerAnsibleParams = function(skips){
-    skips = skips || {};
+var inquirerAnsibleParams = function(params){
+    params = params || {};
     var prompts = [
         {
             type: 'input',
@@ -36,21 +36,21 @@ var inquirerAnsibleParams = function(skips){
         },
         {
             type: 'input',
-            name: 'hosts',
-            message: 'Quel fichier d\'environnement utiliser ?',
-            default: exports.host_default,
+            name: 'inventory',
+            message: 'Quel fichier d\'inventaire utiliser ?',
+            default: exports.inventory_default,
             when: function(){
-                return exports.hosts.length <= 1;
+                return exports.inventories.length <= 1;
             }
         },
         {
             type: 'list',
-            name: 'hosts',
-            message: 'Quel fichier d\'environnement utiliser ?',
-            choices: exports.hosts,
-            default: exports.host_default,
+            name: 'inventory',
+            message: 'Quel fichier d\'inventaire utiliser ?',
+            choices: exports.inventories,
+            default: exports.inventory_default,
             when: function(){
-                return exports.hosts.length > 1;
+                return exports.inventories.length > 1;
             }
         },
         {
@@ -77,13 +77,13 @@ var inquirerAnsibleParams = function(skips){
         },
         {
             type: 'input',
-            name: 'extra',
+            name: 'others',
             message: 'D\'autres options ?'
         }
     ];
 
     var filtered = prompts.filter(function(elt){
-        return skips[elt.name] === undefined;
+        return params[elt.name] === undefined;
     });
 
     debug(filtered);
@@ -109,27 +109,48 @@ exports.confirmAndLaunchCmd = function(cmd, cb){
         });
 };
 
+var CMD_TYPE = {ANSIBLE_ADHOC: 0, ANSIBLE_PLAYBOOK: 1};
+var serializeParams = function(type, params){
+    debug('type= '+type);
+    debug('params= '+params);
+
+    if( !params.inventory  ) throw new Error("Ansible inventory should be defined (params.inventory)");
+    if( type === CMD_TYPE.ANSIBLE_PLAYBOOK && !params.playbook  ) throw new Error("Ansible playbook should be defined (params.playbook)");
+
+    return (type === CMD_TYPE.ANSIBLE_ADHOC ? 'ansible' : '')
+        + (type === CMD_TYPE.ANSIBLE_ADHOC ? (params.limit ? ' ' + [params.limit].join(',') : ' all') : '')
+        + (type === CMD_TYPE.ANSIBLE_ADHOC && params.module ? ' -m ' + params.module : '')
+        + (type === CMD_TYPE.ANSIBLE_ADHOC && params.action ? ' -a "' + params.action + '"' : '')
+            
+        + (type === CMD_TYPE.ANSIBLE_PLAYBOOK ? 'ansible-playbook' : '')
+        + (type === CMD_TYPE.ANSIBLE_PLAYBOOK ? ' ' + params.playbook : '')
+        + ' -i ' + params.inventory
+        + (type === CMD_TYPE.ANSIBLE_PLAYBOOK && params.limit ? ' -l '+[params.limit].join(',') : '')
+        + (params.user ? ' -u ' + params.user : '')
+        + (params.tags ? ' -t ' + [params.tags].join(',') : '')
+        + (params.skipTags ? ' --skip-tags ' + [params.skipTags].join(',') : '')
+        + (params.extra ? ' -e ' + params.extra : '')
+        + (params.checkMode ? ' --check ' : '')
+        + (params.others ? ' ' + params.others : '')
+        ;
+};
+
 /**
  * Launch an ansible adhoc command with structured params
  *
- * @param cmd : bash command to launch (string)
- * @param skips : all prompts that needs to be filtered { checkMode: false }
+ * @param action : action to launch or params if method is used
+ * @param module : ansible module used (default shell)
+ * @param params : all adhoc params
  */
-exports.launchAdhoc = function(cmd, skips){
-    skips = skips || {};
-    skips.checkMode = false;
-    inquirerAnsibleParams(skips).then(function(params){
-        params = Object.assign({}, skips, params);
+exports.launchAdhoc = function(module, action, params){
+    params = params || {};
+    params.checkMode = false;
+    inquirerAnsibleParams(params).then(function(params){
+        params = Object.assign({}, params, params);
+        params.module = params.module || module;
+        params.action = params.action || action;
 
-        exports.confirmAndLaunchCmd(
-            'ansible '
-            + [params.limit].join(',')
-            + (params.hosts ? ' -i ' +params.hosts : ' -i hosts')
-            + ' -u ' +params.user
-            + ' -a "'  + cmd + '"'
-            + (params.checkMode ? ' --check ' : '')
-            + (params.extra || '')
-        );
+        exports.confirmAndLaunchCmd(serializeParams(CMD_TYPE.ANSIBLE_ADHOC, params));
     });
 };
 
@@ -137,23 +158,14 @@ exports.launchAdhoc = function(cmd, skips){
  * Launch an ansible playbook with tags and vars and structured params
  *
  * @param playbook : playbook.yml to launch
- * @param tagsVars : string for tags, skip-tags or extra-vars
- * @param skips : all prompts that needs to be filtered { checkMode: false }
- */
-exports.launchPlaybook = function(playbook, tagsVars, skips){
-    inquirerAnsibleParams(skips).then(function(params) {
-        params = Object.assign({}, skips, params);
+ * @param params : all playbook params
+- */
+exports.launchPlaybook = function(playbook, params){
+    inquirerAnsibleParams(params).then(function(params2) {
+        params = Object.assign({}, params, params2);
+        params.playbook = params.playbook || playbook;
 
-        exports.confirmAndLaunchCmd(
-            'ansible-playbook '
-            + playbook
-            + (params.limit && params.limit !== 'all' ? ' -l ' + [params.limit].join(',') : '')
-            + (params.hosts ? ' -i ' + params.hosts : ' -i hosts')
-            + ' -u ' + params.user + ' '
-            + (tagsVars || '')
-            + (params.checkMode ? ' --check ' : '')
-            + (params.extra || '')
-        );
+        exports.confirmAndLaunchCmd(serializeParams(CMD_TYPE.ANSIBLE_PLAYBOOK, params));
     });
 };
 

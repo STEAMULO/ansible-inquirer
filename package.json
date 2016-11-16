@@ -20,5 +20,8 @@
   "dependencies": {
     "debug": "^2.3.2",
     "inquirer": "^1.2.2"
+  },
+  "scripts": {
+    "test": "node test.js"
   }
 }

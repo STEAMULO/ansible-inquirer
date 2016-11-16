@@ -36,16 +36,19 @@ The object :
 
     {
         user: 'root',
-        hosts: ['host-prod'],
+        inventory: 'host-prod',
         limit: ['webfronts'],
         checkMode: false,
-        extra: ' -e "ansible_var=xxx" '
+        tags: ['deploy'],
+        skipTags: ['restart'],
+        extra: 'ansible_var=xxx',
+        others: ' | tee save.log'
     }
 
 Exemples :
 
-    ansible_inquirer.launchAdhoc('df -h', , {user: 'my_custom'});
-    ansible_inquirer.launchPlaybook('df -h', , {limit: 'my_environment'});
+    ansible_inquirer.launchAdhoc('shell', 'df -h', , {user: 'my_custom'});
+    ansible_inquirer.launchPlaybook('test.yml', {limit: 'my_environment', tags: ['deploy', 'configuration']});
 
 
 # Use all within the recurse method
@@ -65,15 +68,16 @@ The recurse method simplify inquirer's way to do cascading prompts list. It can 
                         message: 'Which one ?',
                         name: 'nextQuestions',
                         choices: [
-                            {name: 'Disc usage', value: function(nextQuestions, answers){ansible_inquirer.launchAdhoc('df -h', answers)} }
-                            {name: 'Date and time', value: function(nextQuestions, answers){ansible_inquirer.launchAdhoc('date', answers)} }
+                            {name: 'Disc usage', value: function(nextQuestions, answers){ansible_inquirer.launchAdhoc('shell', 'df -h', answers)} }
+                            {name: 'Date and time', value: function(nextQuestions, answers){ansible_inquirer.launchAdhoc('shell', 'date', answers)} }
                         ]
                     }
                 },
                 {
                     name: 'Launch test playbook with tag filter',
                     value: function(nextQuestions, answers){
-                        ansible_inquirer.launchPlaybook('test.yml', '-t my_tag', answers);
+                        var params = Object.assign({tags: ['my_tag']}, answers);
+                        ansible_inquirer.launchPlaybook('test.yml', params);
                     }
                 }
             ]
