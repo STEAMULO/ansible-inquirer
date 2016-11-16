@@ -105,7 +105,7 @@ exports.confirmAndLaunchCmd = function(cmd, cb){
             } else {
                 console.log('Ok, bye !');
             }
-            cb();
+            if( typeof cb === 'function' ) cb();
         });
 };
 
