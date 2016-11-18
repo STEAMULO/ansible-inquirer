@@ -121,7 +121,7 @@ var serializeParams = function(type, params){
         + (type === CMD_TYPE.ANSIBLE_ADHOC ? (params.limit ? ' ' + [params.limit].join(',') : ' all') : '')
         + (type === CMD_TYPE.ANSIBLE_ADHOC && params.module ? ' -m ' + params.module : '')
         + (type === CMD_TYPE.ANSIBLE_ADHOC && params.action ? ' -a "' + params.action + '"' : '')
-            
+
         + (type === CMD_TYPE.ANSIBLE_PLAYBOOK ? 'ansible-playbook' : '')
         + (type === CMD_TYPE.ANSIBLE_PLAYBOOK ? ' ' + params.playbook : '')
         + ' -i ' + params.inventory
@@ -159,7 +159,7 @@ exports.launchAdhoc = function(module, action, params){
  *
  * @param playbook : playbook.yml to launch
  * @param params : all playbook params
-- */
+ - */
 exports.launchPlaybook = function(playbook, params){
     inquirerAnsibleParams(params).then(function(params2) {
         params = Object.assign({}, params, params2);
@@ -172,7 +172,7 @@ exports.launchPlaybook = function(playbook, params){
 
 /**
  * Private method for recurse work with inquirer
- * 
+ *
  * @param nextQuestions : at iteration i, the questions to come
  * @param answers : at iteration i, answers already given with non recurse prompts
  * @param lastQuestions : at iteration i, the last questions list answered
@@ -185,9 +185,9 @@ var recurse = function(nextQuestions, answers, lastQuestions) {
         debug('function');
         // la value de la question est une fonction, on lance la fonction
         nextQuestions(nextQuestions, answers);
-    } else if( nextQuestions instanceof Array || nextQuestions === Object(nextQuestions) ){
+    } else if( (nextQuestions instanceof Array && nextQuestions.length>0 && Object.prototype.toString.call(nextQuestions[0]) === '[object Object]') || Object.prototype.toString.call(nextQuestions) === '[object Object]' ){
         debug('prompt');
-        // les questions suivantes sont un tableau ou un objet, on continue la boucle
+        // les questions suivantes sont un tableau d'objets ou un objet, on continue la boucle
         inquirer.prompt(nextQuestions).then(function(newAnswers){
             debug('newAnswers: %j', newAnswers);
             recurse(newAnswers.nextQuestions, Object.assign({}, newAnswers, answers), nextQuestions);
