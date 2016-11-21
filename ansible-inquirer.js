@@ -106,6 +106,10 @@ exports.confirmAndLaunchCmd = function(cmd, cb){
                 console.log('Ok, bye !');
             }
             if( typeof cb === 'function' ) cb();
+        })
+        .catch(function(e){
+            debug('Command execSync error');
+            debug(e);
         });
 };
 
@@ -145,8 +149,8 @@ var serializeParams = function(type, params){
 exports.launchAdhoc = function(module, action, params){
     params = params || {};
     params.checkMode = false;
-    inquirerAnsibleParams(params).then(function(params){
-        params = Object.assign({}, params, params);
+    inquirerAnsibleParams(params).then(function(newParams){
+        params = Object.assign({}, params, newParams);
         params.module = params.module || module;
         params.action = params.action || action;
 
@@ -208,6 +212,6 @@ var recurse = function(nextQuestions, answers, lastQuestions) {
  *
  * @param questions : inquirer formated prompts list
  */
-exports.recursePrompts = function(questions) {
-    recurse(questions, {}, undefined);
+exports.recursePrompts = function(questions, answers) {
+    recurse(questions, (answers || {}), undefined);
 };
