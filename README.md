@@ -83,3 +83,7 @@ The recurse method simplify inquirer's way to do cascading prompts list. It can 
             ]
         }
     ]);
+
+## Author Information
+
+Steamulo - www.steamulo.com
